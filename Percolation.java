@@ -20,10 +20,7 @@ public class Percolation {
 	private int[][] grid;
 	private int numOpenSites, virtualTopID, virtualBottomID;
 	private WeightedQuickUnionUF unionFind;
-	
-	public static void main(String[] args) {
-		
-	}
+	private boolean percolates;
 	
 	/**
 	 * Create n by n grid with all sites blocked and a corresponding union-find.
@@ -41,6 +38,7 @@ public class Percolation {
 		unionFind = new WeightedQuickUnionUF(n*n + 2); // to hold virtual top and bottom site
 		virtualTopID = n*n;
 		virtualBottomID = n*n + 1;
+		percolates = false;
 	}
 	
 	/**
@@ -126,18 +124,7 @@ public class Percolation {
 	 */
 	public boolean percolates() {
 		
-		for (int i = 1; i <= grid.length; i++) {
-			if (isOpen(1, i)) {
-				for (int j = 1; j <= grid.length; j++) {
-					if (isOpen(grid.length, j) &&
-						unionFind.connected(getSiteID(1,i), getSiteID(grid.length,j))) {
-						return true;
-					}
-				}
-			}
-		}
-		
-		return false;
+		return unionFind.connected(virtualTopID, virtualBottomID);
 	}
 	
 	private boolean indexOutOfBounds(int index) {
