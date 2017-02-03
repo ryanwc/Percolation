@@ -60,24 +60,36 @@ public class Percolation {
 		grid[row-1][col-1] = 1;
 		numOpenSites++;
 		
-		// connect to virtual sites if necessary
+		// connect to top virtual site if necessary
 		if (row == 1) 
 			unionFind.union(getSiteID(row, col), virtualTopID);
-		else if (row == grid.length)
-			unionFind.union(getSiteID(row, col), virtualBottomID);
 		
 		// connect it to any open neighbors
 		if (row != 1 && isOpen(row-1, col)) 
 			unionFind.union(getSiteID(row, col), getSiteID(row-1, col));
 		
-		if (row != grid.length && isOpen(row+1, col))
+		if (row != grid.length && isOpen(row+1, col)) {
 			unionFind.union(getSiteID(row, col), getSiteID(row+1, col));
+		}
 		
 		if (col != 1 && isOpen(row, col-1))
 			unionFind.union(getSiteID(row, col), getSiteID(row, col-1));
 		
 		if (col != grid.length && isOpen(row, col+1))
 			unionFind.union(getSiteID(row, col), getSiteID(row, col+1));
+		
+		// if this one is full and connected to a bottom site, enable percolation
+		if (!percolates && isFull(row, col)) {
+			for (int i = 1; i <= grid.length; i++) {
+				if (unionFind.connected(getSiteID(grid.length, i), virtualTopID)) {
+					unionFind.union(getSiteID(grid.length, i), virtualBottomID);	
+					break;
+				}		
+			}
+		}
+		
+		if (!percolates && percolates())
+			percolates = true;
 	}
 	
 	private int getSiteID(int row, int col) {
@@ -108,7 +120,7 @@ public class Percolation {
 		
 		if (indexOutOfBounds(row) || indexOutOfBounds(col))
 				throw new IndexOutOfBoundsException("Row and col must be in [1,size]");
-		
+
 		return unionFind.connected(virtualTopID, getSiteID(row, col));
 	} 
 	
@@ -123,7 +135,6 @@ public class Percolation {
 	 * @return true if the above condition holds, false otherwise
 	 */
 	public boolean percolates() {
-		
 		return unionFind.connected(virtualTopID, virtualBottomID);
 	}
 	
