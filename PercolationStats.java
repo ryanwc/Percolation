@@ -23,32 +23,8 @@ public class PercolationStats {
 		// perform trials independent experiments on an n-by-n grid
 		int n = Integer.parseInt(args[0]);
 		int T = Integer.parseInt(args[1]);
-		Percolation system;
 		PercolationStats stats = new PercolationStats(n, T);;
-		int currOpenSites;
-		
-		for (int i = 0; i < stats.trials; i++) {
-			system = new Percolation(stats.size);
-			currOpenSites = system.numberOfOpenSites();
-			// while there are blocked sites
-			System.out.println("system percolates is " + system.percolates());
-			while (!system.percolates() && 
-					system.numberOfOpenSites() < n*n) {
-				// open a site
-				while (currOpenSites == system.numberOfOpenSites()) {
-					system.open(StdRandom.uniform(1, n+1), 
-							StdRandom.uniform(1, n+1));
-				}
-				currOpenSites = system.numberOfOpenSites();
-			}
-			stats.setPercPointPercent(i, system.numberOfOpenSites() / 
-					((double)n*n));
-		}
 		// print stats
-		stats.setMean();
-		stats.setStdDev();
-		stats.setConfidenceLo();
-		stats.setConfidenceHi();
 		StdOut.printf("mean: ");
 		StdOut.println(stats.mean());
 		StdOut.printf("stddev: ");
@@ -61,9 +37,39 @@ public class PercolationStats {
 	}
 	
 	public PercolationStats(int n, int trials) {
+		
+		if (n < 1 || trials < 1) 
+			throw new IllegalArgumentException("size and trials must be > 0");
+		
 		this.size = n;
 		this.trials = trials;
 		this.percPointPercents = new double[trials];
+		
+		Percolation system;
+		int currOpenSites;
+		
+		for (int i = 0; i < trials; i++) {
+			system = new Percolation(size);
+			currOpenSites = system.numberOfOpenSites();
+			// while there are blocked sites
+			//System.out.println("system percolates is " + system.percolates());
+			while (!system.percolates() && 
+					system.numberOfOpenSites() < n*n) {
+				// open a site
+				while (currOpenSites == system.numberOfOpenSites()) {
+					system.open(StdRandom.uniform(1, n+1), 
+							StdRandom.uniform(1, n+1));
+				}
+				currOpenSites = system.numberOfOpenSites();
+			}
+			setPercPointPercent(i, system.numberOfOpenSites() / 
+					((double)n*n));
+		}
+		
+		setMean();
+		setStdDev();
+		setConfidenceLo();
+		setConfidenceHi();
 	}
 	
 	private void setPercPointPercent(int trialIndex, double percPercent) {
