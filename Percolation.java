@@ -21,6 +21,7 @@ public class Percolation {
 	private int numOpenSites, virtualTopID, virtualBottomID;
 	private WeightedQuickUnionUF unionFind;
 	private boolean percolates;
+	private int[] hasOpenBottomRow;
 	
 	/**
 	 * Create n by n grid with all sites blocked and a corresponding union-find.
@@ -35,6 +36,7 @@ public class Percolation {
 		
 		numOpenSites = 0;
 		grid = new int[n][n];
+		hasOpenBottomRow = new int[n*n];
 		unionFind = new WeightedQuickUnionUF(n*n + 2); // to hold virtual top and bottom site
 		virtualTopID = n*n;
 		virtualBottomID = n*n + 1;
@@ -64,29 +66,55 @@ public class Percolation {
 		if (row == 1) 
 			unionFind.union(getSiteID(row, col), virtualTopID);
 		
-		// connect it to any open neighbors
-		if (row != 1 && isOpen(row-1, col)) 
+		if (row == grid.length)
+			hasOpenBottomRow[unionFind.find(getSiteID(row,col))] = 1;
+		
+		boolean currSiteConnOpnBtmRow = 
+				hasOpenBottomRow[unionFind.find(getSiteID(row,col))] == 1;
+		boolean unionedSitesOpnBtmRow = false;
+		
+		// connect it to any open neighbors while keeping track of whether
+		// we are unioning with a group that has an open bottom site
+		if (row != 1 && isOpen(row-1, col)) {
+			if (!unionedSitesOpnBtmRow) {
+				unionedSitesOpnBtmRow = 
+						hasOpenBottomRow[unionFind.find(getSiteID(row-1,col))] == 1;	
+			}
 			unionFind.union(getSiteID(row, col), getSiteID(row-1, col));
+		}
 		
 		if (row != grid.length && isOpen(row+1, col)) {
+			if (!unionedSitesOpnBtmRow) {
+				unionedSitesOpnBtmRow = 
+						hasOpenBottomRow[unionFind.find(getSiteID(row+1,col))] == 1;	
+			}
 			unionFind.union(getSiteID(row, col), getSiteID(row+1, col));
 		}
 		
-		if (col != 1 && isOpen(row, col-1))
+		if (col != 1 && isOpen(row, col-1)) {
+			if (!unionedSitesOpnBtmRow) {
+				unionedSitesOpnBtmRow = 
+						hasOpenBottomRow[unionFind.find(getSiteID(row,col-1))] == 1;	
+			}
 			unionFind.union(getSiteID(row, col), getSiteID(row, col-1));
+		}
 		
-		if (col != grid.length && isOpen(row, col+1))
+		if (col != grid.length && isOpen(row, col+1)) {
+			if (!unionedSitesOpnBtmRow) {
+				unionedSitesOpnBtmRow = 
+						hasOpenBottomRow[unionFind.find(getSiteID(row,col+1))] == 1;	
+			}
 			unionFind.union(getSiteID(row, col), getSiteID(row, col+1));
+		}
+		
+		if (currSiteConnOpnBtmRow || unionedSitesOpnBtmRow) {
+			hasOpenBottomRow[unionFind.find(getSiteID(row,col))] = 1;
+		}
 		
 		// if this one is full and connected to a bottom site, enable percolation
-		if (!percolates && isFull(row, col)) {
-			for (int i = 1; i <= grid.length; i++) {
-				if (unionFind.connected(getSiteID(grid.length, i), virtualTopID)) {
-					unionFind.union(getSiteID(grid.length, i), virtualBottomID);	
-					break;
-				}		
-			}
-		}
+		if (!percolates && isFull(row, col) && 
+				hasOpenBottomRow[unionFind.find(getSiteID(row, col))] == 1)
+			unionFind.union(getSiteID(row, col), virtualBottomID);
 		
 		if (!percolates && percolates())
 			percolates = true;
